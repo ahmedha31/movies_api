@@ -44,13 +44,13 @@ router.get('/:id', async (req, res) => {
 
 router.get('/:id/info', async (req, res) => {
     // config.url + '/download/' + req.params.id + '/56151',
-    //const { stdout: chromiumPath } = await promisify(exec)("which chromium");
+   const { stdout: chromiumPath } = await promisify(exec)("which chromium");
 
     const browser = await puppeteer.launch({
         headless: false,
         userDataDir: './tmp',
         waitForInitialPage: true,
-        //     executablePath: chromiumPath.trim(),
+      executablePath: chromiumPath.trim(),
         timeout: 0,
         args: [
             '--proxy-server=192.168.1.9:44355',
