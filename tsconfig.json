@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "CommonJS",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strictFunctionTypes": true,
+        "strict": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "noImplicitAny": true,
+        "skipLibCheck": true,
+        "strictNullChecks": true,
+        "target": "es6"
+    },
+    "ts-node": {
+        "esm": true
+    },
+    "exclude": ["node_modules", "dist", "spec"]
+}

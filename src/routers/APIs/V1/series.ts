@@ -1,0 +1,293 @@
+import { default as axios } from 'axios'
+import { load } from 'cheerio'
+import express from 'express'
+const router = express.Router()
+import { getseries } from '../../../middlewaer/getdetails'
+const root = process.cwd()
+var config = require(root + '/config.json')
+router.get('/', async (req, res) => {
+    try {
+        const rs = await axios.get(config.url + '/series', {
+            params: {
+                page: req.query.page,
+            },
+        })
+        const $ = load(rs.data)
+        var search = {
+            section: $('#filter')
+                .children()
+                .children()
+                .eq(0)
+                .find('select')
+                .children()
+                .map(function (i, elem) {
+                    return { name: $(elem).text(), value: $(elem).val() }
+                })
+                .get(),
+
+            category: $('#filter')
+                .children()
+                .children()
+                .eq(1)
+                .find('select')
+                .children()
+                .map(function (i, elem) {
+                    return { name: $(elem).text(), value: $(elem).val() }
+                })
+                .get(),
+
+            rating: $('#filter')
+                .children()
+                .children()
+                .eq(2)
+                .find('select')
+                .children()
+                .map(function (i, elem) {
+                    return { name: $(elem).text(), value: $(elem).val() }
+                })
+                .get(),
+
+            year: $('#filter')
+                .children()
+                .children()
+                .eq(3)
+                .find('select')
+                .children()
+                .map(function (i, elem) {
+                    return { name: $(elem).text(), value: $(elem).val() }
+                })
+                .get(),
+
+            language: $('#filter')
+                .children()
+                .children()
+                .eq(4)
+                .find('select')
+                .children()
+                .map(function (i, elem) {
+                    return { name: $(elem).text(), value: $(elem).val() }
+                })
+                .get(),
+
+            quality: $('#filter')
+                .children()
+                .children()
+                .eq(5)
+                .find('select')
+                .children()
+                .map(function (i, elem) {
+                    return { name: $(elem).text(), value: $(elem).val() }
+                })
+                .get(),
+
+            resolution: $('#filter')
+                .children()
+                .children()
+                .eq(6)
+                .find('select')
+                .children()
+                .map(function (i, elem) {
+                    return { name: $(elem).text(), value: $(elem).val() }
+                })
+                .get(),
+        }
+        var series = $('.entry-box')
+            .map(function (i, elem) {
+                return {
+                    name: $(elem).find('.entry-title').children().text(),
+                    id: $(elem)
+                        .find('.entry-title')
+                        .children()
+                        .attr('href')
+                        ?.toString()
+                        .split('series/')[1]
+                        .split('/')[0],
+                    image: $(elem)
+                        .find('.entry-image')
+                        .find('img')
+                        .attr('data-src'),
+                    date: $(elem).find('span.badge.badge-secondary').text(),
+                    rating: $(elem).find('.label.rating').text(),
+                    quality: $(elem).find('.label.quality').text(),
+                    eConut: $(elem).find('.label.series').text(),
+                    category: $(elem)
+                        .find('span.badge.badge-light')
+                        .map(function (i, elem) {
+                            return $(elem).text()
+                        })
+                        .get(),
+                    type: 'series',
+                }
+            })
+            .get()
+        res.send({
+            status: true,
+            search: search,
+            data: series,
+        })
+    } catch (err) {
+        res.send({
+            status: false,
+            msg: 'Something went wrong',
+            err: err,
+        })
+    }
+})
+
+router.get('/new', async (req, res) => {
+    try {
+        var rs = await axios.get(config.url + '/one')
+        var $ = load(rs.data)
+        var entry = $('.entry-box-2').eq(1)
+        var data = {
+            title: entry
+                .find('.entry-body')
+                .find('.entry-title')
+                .children()
+                .first()
+                .text(),
+            id: entry
+                .find('.entry-body')
+                .find('.entry-title')
+                .children()
+                .first()
+                .attr('href')
+                ?.toString()
+                .split('series/')[1]
+                .split('/')[0],
+            description: entry
+                .find('p.entry-desc')
+                .text()
+                .split('مشاهدة و تحميل مسلسل')[1],
+            Image: entry.find('.entry-poster').find('img').attr('data-src'),
+            banner: entry
+                .attr('style')
+                ?.toString()
+                .split("background-image: url('")[1]
+                .split("')")[0],
+            rate: entry
+                .find('.entry-body')
+                .find('.label.rating')
+                .first()
+                .text(),
+            quality: entry
+                .find('.entry-body')
+                .find('.label.quality')
+                .first()
+                .text(),
+            type: 'series',
+        }
+        res.send({
+            status: true,
+            data: data,
+        })
+    } catch (err) {
+        res.send({
+            status: false,
+            msg: 'Something went wrong',
+            err: err,
+        })
+    }
+})
+
+router.get('/:id', async (req, res) => {
+    try {
+        var rs = await axios.get(config.url + '/series/' + req.params.id)
+        var $ = load(rs.data)
+        console.log($('#series-episodes').find('.row').children().length)
+        if ($('#series-episodes').length === 1) {
+            var episodes = $('#series-episodes')
+                .eq(0)
+                .find('.widget-body')
+                .children()
+                .children()
+                .map(function (i, ele) {
+                    var elem = $(ele).find('a').first()
+                    return {
+                        name: $(elem).text().split(' : ')[0],
+                        cont: i + 1,
+                        image: $(ele).find('img').attr('src'),
+                        id: $(elem)
+                            .attr('href')
+                            ?.toString()
+                            .split('episode/')[1]
+                            .split('/')[0],
+                    }
+                })
+                .get()
+                .reverse()
+        } else if ($('#series-episodes').length === 2) {
+            var sessions = $('#series-episodes')
+                .eq(0)
+                .children()
+                .last()
+                .children()
+                .map(function (i, elem) {
+                    return {
+                        name: $(elem).text().split(' الموسم ')[0],
+                        session: $(elem).text().split(' الموسم ')[1],
+                        id: $(elem)
+                            .attr('href')
+                            ?.toString()
+                            .split('/series/')[1]
+                            .split('/')[0],
+                    }
+                })
+                .get()
+            var episodes = $('#series-episodes')
+                .eq(1)
+                .find('.widget-body')
+                .children()
+                .children()
+                .map(function (i, ele) {
+                    var elem = $(ele).find('a').first()
+                    return {
+                        name: $(elem).text().split(' : ')[0],
+                        cont: i + 1,
+                        image: $(ele).find('img').attr('src'),
+                        id: $(elem)
+                            .attr('href')
+                            ?.toString()
+                            .split('episode/')[1]
+                            .split('/')[0],
+                    }
+                })
+                .get()
+                .reverse()
+        }
+        var actors = $('.entry-box-3')
+            .map(function (i, elem) {
+                return {
+                    id: i++,
+                    name: $(elem).find('.entry-title').text(),
+                    image: $(elem).find('img').attr('src'),
+                }
+            })
+            .get()
+
+        const detail = getseries(rs.data)
+
+        res.send({
+            status: true,
+            detail: detail,
+            sessions: sessions!,
+            episodes: episodes!,
+            actors: actors,
+        })
+    } catch (err: any) {
+        if (err.status === 404) {
+            res.send({
+                status: false,
+                msg: 'Series Not Found',
+            })
+            return
+        }
+        res.send({
+            status: false,
+            msg: 'Something went wrong on our side',
+            err: err.message,
+        })
+    }
+})
+
+module.exports = router
