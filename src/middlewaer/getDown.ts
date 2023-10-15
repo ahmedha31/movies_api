@@ -17,7 +17,7 @@ export default async function (id: string): Promise<{
     const { stdout: chromiumPath } = await promisify(exec)('which chromium')
 
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: "new",
         userDataDir: './tmp',
         waitForInitialPage: true,
         executablePath: chromiumPath.trim(),
