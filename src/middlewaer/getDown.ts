@@ -30,7 +30,7 @@ export default async function (id: string): Promise<{
     })
 
     const page = await browser.pages().then((pages) => pages[0])
-    const cookiesBuffer = await fs.promises.readFile('./cookies.json');
+    const cookiesBuffer = await fs.promises.readFile(root+'/cookies.json');
     const cookies = JSON.parse(cookiesBuffer.toString());
     await page.setCookie(...cookies);
     await page.goto(config.url + '/download/' + id + '/56151')
@@ -43,7 +43,7 @@ export default async function (id: string): Promise<{
             name: $('a[download]').last().text().split('.AKWAM.')[0],
         }
         const cookies = await page.cookies();
-         fs.writeFileSync('./cookies.json',
+         fs.writeFileSync(root +'/cookies.json',
               JSON.stringify(cookies, null, 2));
         await browser.close()
         return {
