@@ -90,7 +90,7 @@ export const GetEp = (rs: any) => {
         })
         .get()
     var aes = JSON.parse(
-        JSON.stringify($('script').attr('type', 'application/ld+json').eq(1).text())
+        JSON.stringify($('script').attr('type', 'application/ld+json').eq(1).text().split("[",1).join('').split("]",1).join(''))
     )[0].containsSeason.episode.position
     var detail = {
         name: $('h1.entry-title')
