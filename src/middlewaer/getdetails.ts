@@ -90,8 +90,7 @@ export const GetEp = (rs: any) => {
         })
         .get()
     var aes = JSON.parse(
-        JSON.stringify($('script').attr('type', 'application/ld+json').eq(1).text().split('"containsSeason":{"@type":"TVSeason","episode":{"@type":"TVEpisode","position":')[1].split(",")[0])
-    )[0].containsSeason.episode.position
+        JSON.stringify($('script').attr('type', 'application/ld+json').eq(1).text().split('"containsSeason":{"@type":"TVSeason","episode":{"@type":"TVEpisode","position":')[1].split(",")[0]))
     var detail = {
         name: $('h1.entry-title')
             .text()
