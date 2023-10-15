@@ -15,7 +15,7 @@ router.get('/:id', async (req, res) => {
    getDown(req.params.id).then((data) => {
         res.redirect(data.link,200)
     }).catch((err) => {
-        res.send({
+        res.status(500).json({
             status: false,
             msg: err.message,
         })

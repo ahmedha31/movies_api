@@ -14,16 +14,14 @@ export default async function (id: string): Promise<{
     name: string
     link: string
 }> {
-    const { stdout: chromiumPath } = await promisify(exec)('which chromium')
 
     const browser = await puppeteer.launch({
-        headless: "new",
+        headless: false,
         userDataDir: './tmp',
         waitForInitialPage: true,
-        executablePath: chromiumPath.trim(),
         timeout: 0,
         args: [
-            //  '--proxy-server=192.168.1.9:44355',
+          //   '--proxy-server=192.168.1.9:44355',
             '--no-sandbox',
             '--disable-setuid-sandbox',
         ],
