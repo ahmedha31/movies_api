@@ -16,7 +16,7 @@ export default async function (id: string): Promise<{
     link: string
 }> {
 
-    const { stdout: chromiumPath } = await promisify(exec)('which chromium')
+  //  const { stdout: chromiumPath } = await promisify(exec)('which chromium')
 
     const browser = await puppeteer
         .connect({ browserWSEndpoint: conn })
@@ -26,7 +26,7 @@ export default async function (id: string): Promise<{
             const browser = await puppeteer.launch({
                 headless: false,
               //  userDataDir: './tmp',
-                executablePath: chromiumPath,
+        //        executablePath: chromiumPath,
                 waitForInitialPage: true,
                 timeout: 0,
 
@@ -54,7 +54,8 @@ export default async function (id: string): Promise<{
             link: $('.link.btn.btn-light').attr('href'),
             name: $('a[download]').last().text().split('.AKWAM.')[0],
         }
-        // const cookies = await page.cookies()
+         const cookies = await page.cookies()
+         console.log(cookies)
         // fs.writeFileSync(
         //     root + '/cookies.json',
         //     JSON.stringify(cookies, null, 2)

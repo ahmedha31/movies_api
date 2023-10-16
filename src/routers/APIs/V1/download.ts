@@ -39,9 +39,9 @@ router.get('/:id/info', async (req, res) => {
 
 router.get('/:id/links', async (req, res) => {
    axios.get(config.url + '/download/' + req.params.id + '/56151',{
+    withCredentials: true,
     headers: {
-        "Cookie":"akwam.us	TRUE		TRUE		akwamVerification3	eyJpdiI6Ikp3Wk9nc0MxbHdiOGsrK2N0V0M2RHc9PSIsInZhbHVlIjoiaVwvMEpqbXJBYVVRNGtVU3ZJMlhkVXc9PSIsIm1hYyI6Ijg5ZTliZjdjYjJiZjYwZTU4Y2IxM2EyNjA3N2E4NTlkMTJkYjRkMGY2MjIyZDQ4YTM1ODgwM2VmMTcxMzFlN2MifQ%3D%3D"
-   
+   Cookie:"akwamVerification3=eyJpdiI6Ikp3Wk9nc0MxbHdiOGsrK2N0V0M2RHc9PSIsInZhbHVlIjoiaVwvMEpqbXJBYVVRNGtVU3ZJMlhkVXc9PSIsIm1hYyI6Ijg5ZTliZjdjYjJiZjYwZTU4Y2IxM2EyNjA3N2E4NTlkMTJkYjRkMGY2MjIyZDQ4YTM1ODgwM2VmMTcxMzFlN2MifQ%3D%3D   "
    } }).then((data) => {
         const $ = cheerio.load(data.data)
         var rss = {
