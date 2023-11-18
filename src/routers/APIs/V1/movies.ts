@@ -5,6 +5,9 @@ const router = express.Router()
 import { GetMovie, DownLoad } from '../../../middlewaer/getdetails'
 const root = process.cwd()
 var config = require(root + '/config.json')
+import { PrismaClient } from '@prisma/client'
+import { AxiosError } from 'axios'
+const prisma = new PrismaClient()
 router.get('/', async (req, res) => {
     try {
         const rs = await axios.get(config.url + '/movies', {
@@ -115,34 +118,131 @@ router.get('/new', async (req, res) => {
 router.get('/:id', async (req, res) => {
     console.log(req.params)
     try {
-        var rs = await axios.get(config.url + '/movie/' + req.params.id)
-        var $ = cheerio.load(rs.data)
+        await prisma.movie
+            .findFirst({
+                where: {
+                    id: parseInt(req.params.id),
+                },
+                include: {
+                    category: true,
+                    actors: true,
+                    download: true,
+                },
+            })
+            .then(async (v) => {
+                if (v) {
+                    res.send({
+                        status: true,
+                        data: v,
+                    })
+                    return
+                } else {
+                    var rs = await axios.get(
+                        config.url + '/movie/' + req.params.id
+                    )
+                    var $ = cheerio.load(rs.data)
 
-        var actors = $('.entry-box-3')
-            .map(function (i, elem) {
-                return {
-                    id: i++,
-                    name: $(elem).find('img').attr('alt'),
-                    image: $(elem).find('img').attr('src'),
+                    var actors = $('.entry-box-3')
+                        .map(function (i, elem) {
+                            return {
+                                id: parseInt(
+                                    $(elem)
+                                        .find('a')
+                                        .attr('href')
+                                        ?.split('/person/')[1]
+                                        .split('/')[0]!
+                                ),
+                                name: $(elem).find('img').attr('alt')!,
+                                image: $(elem).find('img').attr('src')!,
+                            }
+                        })
+                        .get()
+
+                    var downloads = DownLoad(rs.data)
+                    var data = GetMovie(rs.data)
+                    await prisma.movie
+                        .create({
+                            data: {
+                                name: data.title,
+                                id: parseInt(req.params.id),
+                                image: data.image!,
+                                reating: parseFloat(data.rating),
+                                quality: data.quality,
+                                description: data.description,
+                                duration: data.duration,
+                                year: parseInt(data.year ?? '0'),
+                                country: data.country,
+                                language: data.language,
+                                translate: data.translate,
+                                trailer: data.trailer,
+                                category: {
+                                    connectOrCreate: data.category.map((v) => {
+                                        return {
+                                            where: {
+                                                id: v.id,
+                                            },
+                                            create: {
+                                                id: v.id,
+                                                name: v.name,
+                                            },
+                                        }
+                                    }),
+                                },
+                                actors: {
+                                    connectOrCreate: actors.map((v) => {
+                                        return {
+                                            where: {
+                                                id: v.id,
+                                            },
+                                            create: {
+                                                id: v.id,
+                                                name: v.name,
+                                                image: v.image,
+                                            },
+                                        }
+                                    }),
+                                },
+                                download: {
+                                    connectOrCreate: downloads.map((v) => {
+                                        return {
+                                            where: {
+                                                id: v.id,
+                                            },
+                                            create: {
+                                                id: v.id,
+                                                name: v.name,
+                                                quality: v.quality,
+                                                size: v.size,
+                                            },
+                                        }
+                                    }),
+                                },
+                            },
+                        })
+                        .then((v) => {
+                            console.log(
+                                'New Movie Added to DB Wih ID: ' +
+                                    v.id +
+                                    ' With Name: ' +
+                                    v.name
+                            )
+                        })
+                    res.send({
+                        status: true,
+                        info: data,
+                        actors: actors,
+                        downloads: downloads,
+                    })
+                    return
                 }
             })
-            .get()
-
-        var downloads = DownLoad(rs.data)
-        var data = GetMovie(rs.data)
-
-        res.send({
-            status: true,
-            info: data,
-            actors: actors,
-            downloads: downloads,
-        })
     } catch (e) {
-        res.send({
+        res.status(500).json({
             status: false,
-            msg: 'something went wrong',
+            msg: 'Something went wrong',
             err: e,
         })
+        return
     }
 })
 

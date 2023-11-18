@@ -8,8 +8,8 @@ const root = process.cwd()
 var config = require(root + '/config.json')
 router.get('/:id', async (req: Request, res: Response) => {
     getDown(req.params.id)
-        .then((data) => {
-            var vid = axios({
+        .then(async(data) => {
+            var vid = await axios({
                 method: 'get',
                 url: data.link,
                 responseType: 'stream',
@@ -18,6 +18,7 @@ router.get('/:id', async (req: Request, res: Response) => {
                 }),
                 
             })
+            
         })
         .catch((err) => {
             res.send({

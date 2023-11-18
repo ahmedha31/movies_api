@@ -3,6 +3,8 @@ import { load } from 'cheerio'
 import express from 'express'
 const router = express.Router()
 import { getseries } from '../../../middlewaer/getdetails'
+import { PrismaClient } from '@prisma/client'
+const Prisma = new PrismaClient()
 const root = process.cwd()
 var config = require(root + '/config.json')
 router.get('/', async (req, res) => {
@@ -266,6 +268,7 @@ router.get('/:id', async (req, res) => {
             .get()
 
         const detail = getseries(rs.data)
+        console.log( parseInt(detail.sesson!))
 
         res.send({
             status: true,
@@ -274,6 +277,66 @@ router.get('/:id', async (req, res) => {
             episodes: episodes!,
             actors: actors,
         })
+        Prisma.serie
+            .create({
+                data: {
+                    id: parseInt(req.params.id),
+                    name: detail.name,
+                    image: detail.image!,
+                    description: detail.description,
+                    reating: detail.rating,
+                    quality: detail.quality,
+                    language: detail.language,
+                    translate: detail.translate,
+                    country: detail.country,
+                    year: detail.year,
+                    trailer: detail.trailer,
+                    category: {
+                        connectOrCreate: detail.category.map((x) => {
+                            return {
+                                where: {
+                                    id: x.id,
+                                },
+                                create: {
+                                    id: x.id,
+                                    name: x.name,
+                                },
+                            }
+                        }),
+                    },
+                    actors: {
+                        connectOrCreate: actors.map((x) => {
+                            return {
+                                where: {
+                                    id: x.id,
+                                },
+                                create: {
+                                    id: x.id,
+                                    name: x.name,
+                                    image: x.image!,
+                                },
+                            }
+                        }),
+                    },
+                    episodes: {
+                        connectOrCreate: episodes!.map((x) => {
+                            return {
+                                where: {
+                                    id: parseInt(x.id!),
+                                },
+                                create: {
+                                    id: parseInt(x.id!),
+                                    name: x.name,
+                                    image: x.image!,
+                                    episode: x.cont,
+
+                                },
+                            }
+                        }),
+                    },
+                },
+            })
+            .then((res) => {})
     } catch (err: any) {
         if (err.status === 404) {
             res.send({

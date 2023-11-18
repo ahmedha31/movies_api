@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @map("_id")
+  name      String
+  createdAt DateTime @default(now())
+}
+
+model Movie {
+  id          Int        @id @map("_id")
+  name        String
+  description String?
+  image       String
+  banner      String?
+  reating     Float?
+  quality     String?
+  language    String?
+  translate   String?
+  country     String?
+  year        Int?
+  duration    String?
+  trailer     String?
+  category    category[] @relation(references: [id], fields: [categoryid])
+  categoryid  Int[]
+  actors      actor[]    @relation(references: [id], fields: [actorsids])
+  actorsids   Int[]
+  download    download[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Serie {
+  id          Int        @id @map("_id")
+  name        String
+  description String?
+  image       String
+  banner      String?
+  reating     Float?
+  quality     String?
+  language    String?
+  translate   String?
+  country     String?
+  year        Int?
+  duration    String?
+  trailer     String?
+  category    category[] @relation(references: [id], fields: [categoryid])
+  categoryid  Int[]
+  actors      actor[]    @relation(references: [id], fields: [actorsids])
+  actorsids   Int[]
+  // sessons     Serie[]
+  thissesson  Int        @default(1)
+  episodes    episodes[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model episodes {
+  id       Int     @id @map("_id")
+  name     String
+  episode  Int
+  image    String
+  duration String?
+
+  download download[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Serie   Serie? @relation(fields: [serieId], references: [id])
+  serieId Int?
+}
+
+model category {
+  id        Int      @id @map("_id")
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  movie     Movie[]  @relation(references: [id], fields: [movieid])
+  movieid   Int[]
+  serie     Serie[]  @relation(references: [id], fields: [serieid])
+  serieid   Int[]
+}
+
+model actor {
+  id        Int      @id @map("_id")
+  name      String
+  image     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  movie     Movie[]  @relation(references: [id], fields: [movieid])
+  movieid   Int[]
+  serie     Serie[]  @relation(references: [id], fields: [serieid])
+  serieid   Int[]
+}
+
+model download {
+  id Int @id @map("_id")
+
+  quality String
+  size    String
+  name    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Movie   Movie? @relation(fields: [movieId], references: [id])
+  movieId Int?
+
+  episodes   episodes? @relation(fields: [episodesId], references: [id])
+  episodesId Int?
+}
