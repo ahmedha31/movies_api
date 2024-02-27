@@ -8,6 +8,8 @@ jobs:
 
    
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
     - name: Download
       run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
     - name: Extract
