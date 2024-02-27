@@ -6,8 +6,8 @@ import { GetMovie, DownLoad } from '../../../middlewaer/getdetails'
 const root = process.cwd()
 var config = require(root + '/config.json')
 import { PrismaClient } from '@prisma/client'
-import { AxiosError } from 'axios'
 const prisma = new PrismaClient()
+import { AxiosError } from 'axios'
 router.get('/', async (req, res) => {
     try {
         const rs = await axios.get(config.url + '/movies', {
@@ -58,6 +58,26 @@ router.get('/', async (req, res) => {
 })
 
 router.get('/new', async (req, res) => {
+    interface NewMovieStatus {
+        status: boolean
+        msg?: string
+        err?: string
+    }
+
+    interface NewMovieData {
+        title: string
+        id: string | undefined
+        description: string | undefined
+        image: string | undefined
+        banner: string | undefined
+        rate: string | undefined
+        quality: string
+        type: string
+    }
+
+    interface NewMovie extends NewMovieStatus {
+        data: NewMovieData
+    }
     try {
         var rs = await axios.get(config.url + '/one')
         var $ = cheerio.load(rs.data)
@@ -78,13 +98,21 @@ router.get('/new', async (req, res) => {
                 ?.toString()
                 .split('movie/')[1]
                 .split('/')[0],
-            description: entry
-                .find('.entry-body')
-                .find('.entry-desc')
-                .first()
-                .text()
-                .split('مشاهدة و تحميل فيلم ')[1],
-            Image: entry.find('.entry-poster').find('img').attr('data-src'),
+            description:
+                entry
+                    .find('.entry-body')
+                    .find('.entry-desc')
+                    .first()
+                    .text()
+                    .split(
+                        entry
+                            .find('.entry-body')
+                            .find('.entry-title')
+                            .children()
+                            .first()
+                            .text()!
+                    )[1] ?? 'No Description',
+            image: entry.find('.entry-poster').find('img').attr('data-src'),
             banner: entry
                 .attr('style')
                 ?.toString()
@@ -102,10 +130,11 @@ router.get('/new', async (req, res) => {
                 .text(),
             type: 'movie',
         }
-        res.send({
+        var movie: NewMovie = {
             status: true,
             data: data,
-        })
+        }
+        res.send(movie)
     } catch (e) {
         res.send({
             status: false,
@@ -117,25 +146,70 @@ router.get('/new', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     console.log(req.params)
+    interface MovieStatus {
+        status: boolean
+    }
+
+    interface Info {
+        title: string
+        image: string
+        description: string
+        rating: string
+        language: string
+        translate: string
+        quality: string
+        country: string
+        year: string
+        duration: string
+        category: string[]
+        trailer: string
+    }
+
+    interface Actor {
+        id: number
+        name: string
+        image: string
+    }
+
+    interface Downloads {
+        name: string
+        size: string
+        quality: string
+        id: number
+        url: string
+        download: string
+    }
+
+    interface Movie extends MovieStatus {
+        info: Info
+        actors: Actor[]
+        downloads: Downloads[]
+    }
     try {
-        await prisma.movie
+        var ress = await prisma.movie
             .findFirst({
                 where: {
                     id: parseInt(req.params.id),
                 },
                 include: {
-                    category: true,
-                    actors: true,
+                    category: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                    actors: {
+                        select: {
+                            id: true,
+                            name: true,
+                            image: true,
+                        },
+                    },
                     download: true,
                 },
             })
             .then(async (v) => {
                 if (v) {
-                    res.send({
-                        status: true,
-                        data: v,
-                    })
-                    return
+                    return v
                 } else {
                     var rs = await axios.get(
                         config.url + '/movie/' + req.params.id
@@ -226,21 +300,75 @@ router.get('/:id', async (req, res) => {
                                     ' With Name: ' +
                                     v.name
                             )
+                        }).finally(async () => {
+                            await prisma.movie.findFirst({
+                                where: {
+                                    id: parseInt(req.params.id),
+                                },
+                                include: {
+                                    category: {
+                                        select: {
+                                            name: true,
+                                        },
+                                    },
+                                    actors: {
+                                        select: {
+                                            id: true,
+                                            name: true,
+                                            image: true,
+                                        },
+                                    },
+                                    download: true,
+                                },
+                            }).then((v) => {
+                                return v
+                            })
                         })
-                    res.send({
-                        status: true,
-                        info: data,
-                        actors: actors,
-                        downloads: downloads,
-                    })
-                    return
                 }
             })
-    } catch (e) {
+        var movie: Movie = {
+            status: true,
+            info: {
+                title: ress!.name,
+                image: ress!.image,
+                description: ress!.description ?? 'No Description',
+                rating: ress!.reating!.toString(),
+                language: ress!.language ?? 'No Language',
+                translate: ress!.translate ?? 'No Translate',
+                quality: ress!.quality ?? 'No Quality',
+                country: ress!.country ?? 'No Country',
+                year: ress!.year?.toString() ?? 'No Year',
+                duration: ress!.duration ?? 'No Duration',
+                category: ress!.category.map((v) => {
+                    return v.name
+                }),
+                trailer: ress!.trailer ?? '',
+            },
+            actors: ress!.actors.map((v) => {
+                return {
+                    id: v.id,
+                    name: v.name,
+                    image: v.image,
+                }
+            }),
+            downloads: ress!.download.map((v) => {
+                return {
+                    name: v.name,
+                    size: v.size,
+                    quality: v.quality,
+                    id: v.id,
+                    url: config.url + '/download/' + v.id,
+                    download: config.url + '/download/' + v.id,
+                }
+            }),
+        }
+        res.send(movie)
+    } catch (e : any) {
         res.status(500).json({
             status: false,
             msg: 'Something went wrong',
             err: e,
+            stack: e.stack,
         })
         return
     }

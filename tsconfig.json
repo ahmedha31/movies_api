@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
+        "module": "CommonJS",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strictFunctionTypes": true,
@@ -10,10 +10,8 @@
         "noImplicitAny": true,
         "skipLibCheck": true,
         "strictNullChecks": true,
-        "target": "es2017"
+        "target": "ES6"
     },
-    "ts-node": {
-        "esm": true
-    },
+ 
     "exclude": ["node_modules", "dist", "spec"]
 }

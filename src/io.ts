@@ -1,27 +1,40 @@
 import { RemoteSocket, Server, Socket } from 'socket.io'
 import https from 'http'
 import { DefaultEventsMap } from 'socket.io/dist/typed-events'
+import mongose from 'mongoose'
+import { instrument } from '@socket.io/admin-ui'
 
 class IO {
-    io
+    static io: Server
 
     constructor(server: https.Server) {
-        this.io = new Server(server, {
+        IO.io = new Server(server, {
             cors: {
                 origin: ['https://admin.socket.io'],
-                credentials: true,
+                credentials: false,
             },
         })
-        this.io.on('connection',async (socket) => {
-            var connectedto :RemoteSocket<DefaultEventsMap, any> 
-            await this.io.sockets.fetchSockets().then((res) => {
+        instrument(IO.io, {
+            auth: {
+                password: '$2b$10$heqvAkYMez.Va6Et2uXInOnkCT6/uQj1brkrbyG3LpopDklcq7ZOS',
+                username: 'admin',
+                type: 'basic',
+            },
+            namespaceName: '/',
+            
+            mode: 'development',
+        })
+        IO.io.on('connection', async (socket) => {
+            var connectedto: RemoteSocket<DefaultEventsMap, any>
+            await IO.io.sockets.fetchSockets().then((res) => {
                 res.forEach((e) => {
                     if (
                         socket.handshake.query.connecto ==
                         e.handshake.query.token
                     ) {
                         console.log('joined')
-                        connectedto = e                    }
+                        connectedto = e
+                    }
                 })
             })
 

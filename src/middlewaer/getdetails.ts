@@ -131,7 +131,7 @@ export const GetMovie = (rs: any) => {
         title: $('h1.entry-title').text(),
         image: $('a[data-fancybox]').attr('href'),
         description: $('h2 p').first().text() ?? 'No description',
-        rating: $('span.mx-2').text(),
+        rating: $('span.mx-2').text().split('10 / ')[1] ?? '0',
         language: entry.find((x: { name: string }) => x.name === 'اللغة')
             ? entry.find((x: { name: string }) => x.name === 'اللغة')!.value
             : null,

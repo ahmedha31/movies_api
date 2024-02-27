@@ -13,7 +13,9 @@ import { isAuth } from './middlewaer/Auth'
 import { Usermodel } from './database/models/usermodel'
 import IO from './io'
 const LocalStrategy = require('passport-local').Strategy
-
+import fs from 'fs'
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 app.use(cors({ origin: '*', credentials: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
@@ -77,4 +79,5 @@ console.log(
 server.listen(port, () => {
     new IO(server)
     console.log(`🚀 Server is running on port ${port}`)
+  
 })

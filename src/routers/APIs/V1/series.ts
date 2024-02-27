@@ -194,149 +194,244 @@ router.get('/new', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        var rs = await axios.get(config.url + '/series/' + req.params.id)
-        var $ = load(rs.data)
-        console.log($('#series-episodes').find('.row').children().length)
-        if ($('#series-episodes').length === 1) {
-            var episodes = $('#series-episodes')
-                .eq(0)
-                .find('.widget-body')
-                .children()
-                .children()
-                .map(function (i, ele) {
-                    var elem = $(ele).find('a').first()
-                    return {
-                        name: $(elem).text().split(' : ')[0],
-                        cont: i + 1,
-                        image: $(ele).find('img').attr('src'),
-                        id: $(elem)
-                            .attr('href')
-                            ?.toString()
-                            .split('episode/')[1]
-                            .split('/')[0],
-                    }
-                })
-                .get()
-                .reverse()
-        } else if ($('#series-episodes').length === 2) {
-            var sessions = $('#series-episodes')
-                .eq(0)
-                .children()
-                .last()
-                .children()
-                .map(function (i, elem) {
-                    return {
-                        name: $(elem).text().split(' الموسم ')[0],
-                        session: $(elem).text().split(' الموسم ')[1],
-                        id: $(elem)
-                            .attr('href')
-                            ?.toString()
-                            .split('/series/')[1]
-                            .split('/')[0],
-                    }
-                })
-                .get()
-            var episodes = $('#series-episodes')
-                .eq(1)
-                .find('.widget-body')
-                .children()
-                .children()
-                .map(function (i, ele) {
-                    var elem = $(ele).find('a').first()
-                    return {
-                        name: $(elem).text().split(' : ')[0],
-                        cont: i + 1,
-                        image: $(ele).find('img').attr('src'),
-                        id: $(elem)
-                            .attr('href')
-                            ?.toString()
-                            .split('episode/')[1]
-                            .split('/')[0],
-                    }
-                })
-                .get()
-                .reverse()
-        }
-        var actors = $('.entry-box-3')
-            .map(function (i, elem) {
-                return {
-                    id: i++,
-                    name: $(elem).find('.entry-title').text(),
-                    image: $(elem).find('img').attr('src'),
-                }
-            })
-            .get()
+        await Prisma.serie
+            .findFirst({
+                where: {
+                    id: Number.parseInt(req.params.id),
+                },
+                include: {
+                    episodes: {
+                        orderBy: {
+                            episode: 'asc',
+                        },
+                        include: {
+                            download: {
+                                select:{
+                                    id:true,
+                                    name:true,
+                                    size:true,
+                                    quality:true,
 
-        const detail = getseries(rs.data)
-        console.log( parseInt(detail.sesson!))
-
-        res.send({
-            status: true,
-            detail: detail,
-            sessions: sessions!,
-            episodes: episodes!,
-            actors: actors,
-        })
-        Prisma.serie
-            .create({
-                data: {
-                    id: parseInt(req.params.id),
-                    name: detail.name,
-                    image: detail.image!,
-                    description: detail.description,
-                    reating: detail.rating,
-                    quality: detail.quality,
-                    language: detail.language,
-                    translate: detail.translate,
-                    country: detail.country,
-                    year: detail.year,
-                    trailer: detail.trailer,
-                    category: {
-                        connectOrCreate: detail.category.map((x) => {
-                            return {
-                                where: {
-                                    id: x.id,
-                                },
-                                create: {
-                                    id: x.id,
-                                    name: x.name,
-                                },
-                            }
-                        }),
+                                }
+                            },
+                        },
                     },
                     actors: {
-                        connectOrCreate: actors.map((x) => {
-                            return {
-                                where: {
-                                    id: x.id,
-                                },
-                                create: {
-                                    id: x.id,
-                                    name: x.name,
-                                    image: x.image!,
-                                },
-                            }
-                        }),
+                        select: {
+                            id: true,
+                            name: true,
+                            image: true,
+                        },
                     },
-                    episodes: {
-                        connectOrCreate: episodes!.map((x) => {
-                            return {
-                                where: {
-                                    id: parseInt(x.id!),
-                                },
-                                create: {
-                                    id: parseInt(x.id!),
-                                    name: x.name,
-                                    image: x.image!,
-                                    episode: x.cont,
-
-                                },
-                            }
-                        }),
-                    },
+                    category:{
+                        select:{
+                            name:true,
+                            id:true
+                        }
+                    }
                 },
             })
-            .then((res) => {})
+            .then((data) => {
+                if (data) {
+                    res.send({
+                        status: true,
+                        data: data,
+                    })
+                    console.log('data from db')
+                    return
+                } else {
+                    throw { status: 404 }
+                }
+            })
+            .catch(async (err) => {
+                var rs = await axios.get(
+                    config.url + '/series/' + req.params.id
+                )
+                var $ = load(rs.data)
+                console.log(
+                    $('#series-episodes').find('.row').children().length
+                )
+                if ($('#series-episodes').length === 1) {
+                    var episodes = $('#series-episodes')
+                        .eq(0)
+                        .find('.widget-body')
+                        .children()
+                        .children()
+                        .map(function (i, ele) {
+                            var elem = $(ele).find('a').first()
+                            console.log($(elem).text().split(' : ')[0])
+
+                            return {
+                                name: $(elem).text().split(' : ')[0],
+                                cont:parseInt($(elem).text().split(' : ')[0].split('حلقة ')[1]),
+                                image: $(ele).find('img').attr('src'),
+                                id: $(elem)
+                                    .attr('href')
+                                    ?.toString()
+                                    .split('episode/')[1]
+                                    .split('/')[0],
+                            }
+                        })
+                        .get()
+                        .reverse()
+                } else if ($('#series-episodes').length === 2) {
+                    var sessions = $('#series-episodes')
+                        .eq(0)
+                        .children()
+                        .last()
+                        .children()
+                        .map(function (i, elem) {
+                            return {
+                                name: $(elem).text().split(' الموسم ')[0],
+                                session: $(elem).text().split(' الموسم ')[1],
+                                id: $(elem)
+                                    .attr('href')
+                                    ?.toString()
+                                    .split('/series/')[1]
+                                    .split('/')[0],
+                            }
+                        })
+                        .get()
+                    var episodes = $('#series-episodes')
+                        .eq(1)
+                        .find('.widget-body')
+                        .children()
+                        .children()
+                        .map(function (i, ele) {
+                            var elem = $(ele).find('a').first()
+                            console.log($(elem).text().split(' : ')[0].split('الحلقة ')[1])
+                            return {
+                                name: $(elem).text().split(' : ')[0],
+                                cont:parseInt($(elem).text().split(' : ')[0].split('حلقة ')[1]),
+                                image: $(ele).find('img').attr('src'),
+                                id: $(elem)
+                                    .attr('href')
+                                    ?.toString()
+                                    .split('episode/')[1]
+                                    .split('/')[0],
+                            }
+                        })
+                        .get().sort((a,b)=>a.id! > b.id! ? 1 : -1)
+                        .reverse()
+                }
+                var actors = $('.entry-box-3')
+                    .map(function (i, elem) {
+                        return {
+                            id: i++,
+                            name: $(elem).find('.entry-title').text(),
+                            image: $(elem).find('img').attr('src'),
+                        }
+                    })
+                    .get()
+
+                const detail = getseries(rs.data)
+                console.log(parseInt(detail.sesson!))
+
+                // res.send({
+                //     status: true,
+                //     detail: detail,
+                //     sessions: sessions!,
+                //     episodes: episodes!,
+                //     actors: actors,
+                // })
+                var reees = await Prisma.serie.create({
+                    data: {
+                        id: parseInt(req.params.id),
+                        name: detail.name,
+                        description: detail.description,
+                        image: detail.image || '',
+                        banner: detail.banner,
+                        reating: detail.rating,
+                        quality: detail.quality,
+                        language: detail.language,
+                        translate: detail.translate,
+                        year: detail.year,
+                        country: detail.country,
+                        category: {
+                            connectOrCreate: detail.category.map((x) => {
+                                return {
+                                    where: {
+                                        id: x.id,
+                                    },
+                                    create: {
+                                        id: x.id,
+                                        name: x.name,
+                                    },
+                                }
+                            }),
+                        },
+                        episodes: {
+                            connectOrCreate: episodes!.map((x) => {
+                                return {
+                                    where: {
+                                        id: parseInt(x.id!),
+                                    },
+                                    create: {
+                                        id: parseInt(x.id!),
+                                        name: x.name,
+                                        episode: x.cont,
+                                        image: x.image!,
+                                    },
+                                }
+                            }),
+                        },
+                        actors: {
+                            connectOrCreate: actors.map((x) => {
+                                return {
+                                    where: {
+                                        id: x.id,
+                                    },
+                                    create: {
+                                        id: x.id,
+                                        name: x.name,
+                                        image: x.image!,
+                                    },
+                                }
+                            }),
+                        },
+                        trailer: detail.trailer,
+                    },
+                }).then((data) => {
+                   var series = Prisma.serie.findFirst({
+                        where: {
+                            id: parseInt(req.params.id),
+                        },
+                        include: {
+                            episodes: {
+                                orderBy: {
+                                    episode: 'asc',
+                                },
+                                include: {
+                                    download: {
+                                        select:{
+                                            id:true,
+                                            name:true,
+                                            size:true,
+                                            quality:true,
+                                        }
+                                    },
+                                },
+                            },
+                            actors: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    image: true,
+                                },
+                            },
+                            category:{
+                                select:{
+                                    name:true,
+                                    id:true
+                                }
+                            }
+                        },
+                    })
+                    return series
+                })
+                
+                       
+            })
     } catch (err: any) {
         if (err.status === 404) {
             res.send({
@@ -345,11 +440,7 @@ router.get('/:id', async (req, res) => {
             })
             return
         }
-        res.send({
-            status: false,
-            msg: 'Something went wrong on our side',
-            err: err.message,
-        })
+       throw err
     }
 })
 

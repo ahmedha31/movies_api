@@ -41,6 +41,7 @@ router.post(
                     status: false,
                     message: 'Not auth',
                     error: err,
+                    
                 })
             } else {
                 user['password'] = undefined
@@ -74,7 +75,7 @@ router.post(
             }
         }
     ) => {
-        passport.authenticate('local', (err, user, info) => {
+        passport.authenticate('local', (err: { message: any }, user: { username: any }, info: any) => {
             if (err) {
                 res.status(403).json({
                     status: false,
