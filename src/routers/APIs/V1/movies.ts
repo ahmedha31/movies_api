@@ -8,6 +8,7 @@ var config = require(root + '/config.json')
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import { AxiosError } from 'axios'
+import { slack } from '../../../utils/slack'
 router.get('/', async (req, res) => {
     try {
         const rs = await axios.get(config.url + '/movies', {
@@ -185,11 +186,33 @@ router.get('/:id', async (req, res) => {
         actors: Actor[]
         downloads: Downloads[]
     }
+    await getMovie(parseInt(req.params.id))
+        .then((v) => {
+            var movie: Movie = {
+                status: true,
+                info: v.info,
+                actors: v.actors,
+                downloads: v.downloads,
+            }
+            res.send(movie)
+        })
+        .catch((e: Error) => {
+            res.status(502).send({
+                status: false,
+                msg: 'Something went wrong',
+                err: e,
+            })
+        })
+})
+
+module.exports = router
+
+async function getMovie(id: number): Promise<Movie> {
     try {
         var ress = await prisma.movie
             .findFirst({
                 where: {
-                    id: parseInt(req.params.id),
+                    id: id,
                 },
                 include: {
                     category: {
@@ -211,9 +234,7 @@ router.get('/:id', async (req, res) => {
                 if (v) {
                     return v
                 } else {
-                    var rs = await axios.get(
-                        config.url + '/movie/' + req.params.id
-                    )
+                    var rs = await axios.get(config.url + '/movie/' + id)
                     var $ = cheerio.load(rs.data)
 
                     var actors = $('.entry-box-3')
@@ -238,7 +259,7 @@ router.get('/:id', async (req, res) => {
                         .create({
                             data: {
                                 name: data.title,
-                                id: parseInt(req.params.id),
+                                id: id,
                                 image: data.image!,
                                 reating: parseFloat(data.rating),
                                 quality: data.quality,
@@ -300,29 +321,46 @@ router.get('/:id', async (req, res) => {
                                     ' With Name: ' +
                                     v.name
                             )
-                        }).finally(async () => {
-                            await prisma.movie.findFirst({
-                                where: {
-                                    id: parseInt(req.params.id),
-                                },
-                                include: {
-                                    category: {
-                                        select: {
-                                            name: true,
-                                        },
+                            slack.send({
+                                text:
+                                    'New Movie Added to DB Wih ID: ' +
+                                    v.id +
+                                    ' With Name: ' +
+                                    v.name,
+                                metadata: {
+                                    event_type: 'info',
+                                    event_payload: {
+                                        id: v.id,
+                                        name: v.name,
                                     },
-                                    actors: {
-                                        select: {
-                                            id: true,
-                                            name: true,
-                                            image: true,
-                                        },
-                                    },
-                                    download: true,
                                 },
-                            }).then((v) => {
-                                return v
                             })
+                        })
+                        .finally(async () => {
+                            await prisma.movie
+                                .findFirst({
+                                    where: {
+                                        id: id,
+                                    },
+                                    include: {
+                                        category: {
+                                            select: {
+                                                name: true,
+                                            },
+                                        },
+                                        actors: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                image: true,
+                                            },
+                                        },
+                                        download: true,
+                                    },
+                                })
+                                .then((v) => {
+                                    return v
+                                })
                         })
                 }
             })
@@ -362,16 +400,8 @@ router.get('/:id', async (req, res) => {
                 }
             }),
         }
-        res.send(movie)
-    } catch (e : any) {
-        res.status(500).json({
-            status: false,
-            msg: 'Something went wrong',
-            err: e,
-            stack: e.stack,
-        })
-        return
+        return movie
+    } catch (e: any) {
+        throw Error(e)
     }
-})
-
-module.exports = router
+}
