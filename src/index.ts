@@ -15,6 +15,7 @@ import IO from './io'
 const LocalStrategy = require('passport-local').Strategy
 import fs from 'fs'
 import { PrismaClient } from '@prisma/client'
+import { getMovie } from './routers/APIs/V1/movies'
 const prisma = new PrismaClient()
 app.use(cors({ origin: '*', credentials: true }))
 app.use(bodyParser.json())
@@ -39,7 +40,7 @@ app.use(passport.authenticate('session'))
 
 app.use((req, _res, next) => {
     console.log(req.url)
-    console.log('===========')
+
     next()
 })
 
@@ -71,13 +72,10 @@ passport.use(
 app.use('/auth', require('./routers/Auth'))
 app.use('/', require('./routers/APIs'))
 
-console.log(
-    // get os name
-    require('os').platform()
-)
-
 server.listen(port, () => {
     new IO(server)
     console.log(`🚀 Server is running on port ${port}`)
+
+    
   
 })

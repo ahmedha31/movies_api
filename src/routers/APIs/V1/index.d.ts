@@ -117,7 +117,7 @@ interface AllMovieData {
   type: string; // Assuming type is a string in this case
 }
 
-interface Movie {
+interface MovieType {
   status: boolean;
   info: Info;
   actors: Actor[];
@@ -156,4 +156,22 @@ interface Info {
 
 
 
-  
+  export {
+    NewSeries,
+    NewSeriesData,
+    AllSeries,
+    AllSeriesData,
+    Series,
+    SeriesData,
+    Eps,
+    Season,
+    Actor,
+    NewMovie,
+    NewMovieData,
+    AllMovie,
+    AllMovieData,
+    MovieType,
+    Actor,
+    Downloads,
+    Info,
+  };

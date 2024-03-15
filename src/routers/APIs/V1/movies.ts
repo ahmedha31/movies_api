@@ -9,6 +9,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import { AxiosError } from 'axios'
 import { slack } from '../../../utils/slack'
+import { MovieType } from '.'
 router.get('/', async (req, res) => {
     try {
         const rs = await axios.get(config.url + '/movies', {
@@ -196,19 +197,13 @@ router.get('/:id', async (req, res) => {
             }
             res.send(movie)
         })
-        .catch((e: Error) => {
-            res.status(502).send({
-                status: false,
-                msg: 'Something went wrong',
-                err: e,
-            })
-        })
+       
 })
 
 module.exports = router
 
-async function getMovie(id: number): Promise<Movie> {
-    try {
+async function getMovie(id: number): Promise<MovieType> {
+
         var ress = await prisma.movie
             .findFirst({
                 where: {
@@ -255,7 +250,7 @@ async function getMovie(id: number): Promise<Movie> {
 
                     var downloads = DownLoad(rs.data)
                     var data = GetMovie(rs.data)
-                    await prisma.movie
+                    return await prisma.movie
                         .create({
                             data: {
                                 name: data.title,
@@ -314,14 +309,14 @@ async function getMovie(id: number): Promise<Movie> {
                                 },
                             },
                         })
-                        .then((v) => {
+                        .then(async (v) => {
                             console.log(
                                 'New Movie Added to DB Wih ID: ' +
-                                    v.id +
-                                    ' With Name: ' +
-                                    v.name
+                                v.id +
+                                ' With Name: ' +
+                                v.name
                             )
-                            slack.send({
+                            await slack.send({
                                 text:
                                     'New Movie Added to DB Wih ID: ' +
                                     v.id +
@@ -335,9 +330,7 @@ async function getMovie(id: number): Promise<Movie> {
                                     },
                                 },
                             })
-                        })
-                        .finally(async () => {
-                            await prisma.movie
+                            return await prisma.movie
                                 .findFirst({
                                     where: {
                                         id: id,
@@ -362,9 +355,10 @@ async function getMovie(id: number): Promise<Movie> {
                                     return v
                                 })
                         })
+
                 }
             })
-        var movie: Movie = {
+        var movie: MovieType = {
             status: true,
             info: {
                 title: ress!.name,
@@ -401,7 +395,8 @@ async function getMovie(id: number): Promise<Movie> {
             }),
         }
         return movie
-    } catch (e: any) {
-        throw Error(e)
-    }
+   
 }
+
+
+export {getMovie}
