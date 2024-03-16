@@ -200,7 +200,6 @@ router.get('/:id', async (req, res) => {
        
 })
 
-module.exports = router
 
 async function getMovie(id: number): Promise<MovieType> {
 
@@ -317,18 +316,46 @@ async function getMovie(id: number): Promise<MovieType> {
                                 v.name
                             )
                             await slack.send({
-                                text:
-                                    'New Movie Added to DB Wih ID: ' +
-                                    v.id +
-                                    ' With Name: ' +
-                                    v.name,
-                                metadata: {
-                                    event_type: 'info',
-                                    event_payload: {
-                                        id: v.id,
-                                        name: v.name,
-                                    },
-                                },
+                                
+                                    "blocks": [
+                                        {
+                                            "type": "section",
+                                            "text": {
+                                                "type": "plain_text",
+                                                "text": "New Movie Added to DB",
+                                                "emoji": true
+                                            }
+                                        },
+                                        {
+                                            "type": "section",
+                                            "text": {
+                                                "type": "plain_text",
+                                                "text": "New Movie Added to DB Wih ID: " + v.id,
+                                                "emoji": true
+                                            }
+                                        },
+                                        {
+                                            "type": "section",
+                                            "text": {
+                                                "type": "plain_text",
+                                                "text": "With Name: " + v.name,
+                                                "emoji": true
+                                            }
+                                        },
+                                        {
+                                            "type": "section",
+                                            "text": {
+                                                "type": "mrkdwn",
+                                                "text": v.description ?? 'No Description'
+                                            },
+                                            "accessory": {
+                                                "type": "image",
+                                                "image_url": v.image,
+                                                "alt_text": "cute cat"
+                                            }
+                                        }
+                                    ]
+                                
                             })
                             return await prisma.movie
                                 .findFirst({
@@ -399,4 +426,4 @@ async function getMovie(id: number): Promise<MovieType> {
 }
 
 
-export {getMovie}
+export {getMovie,router}

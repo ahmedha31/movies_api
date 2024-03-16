@@ -1,5 +1,5 @@
 import { IncomingWebhook } from "@slack/webhook";
 
-const url = "https://hooks.slack.com/services/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";
+const url = "https://hooks.slack.com/services/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";
 
 export const slack = new IncomingWebhook(url);

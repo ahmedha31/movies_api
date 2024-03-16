@@ -113,7 +113,7 @@ router.get('/test', async (req, res) => {
 })
 
 router.use('/search', require('./V1/search'))
-router.use('/movie', require('./V1/movies'))
+router.use('/movie', require('./V1/movies').router)
 router.use('/series', require('./V1/series'))
 router.use('/episode', require('./V1/episode'))
 router.use('/download', require('./V1/download'))

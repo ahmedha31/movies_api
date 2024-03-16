@@ -15,7 +15,7 @@ import IO from './io'
 const LocalStrategy = require('passport-local').Strategy
 import fs from 'fs'
 import { PrismaClient } from '@prisma/client'
-import { getMovie } from './routers/APIs/V1/movies'
+import { getMovie } from './routers/APIs/V1/movies' // Import the getMovie function correctly
 const prisma = new PrismaClient()
 app.use(cors({ origin: '*', credentials: true }))
 app.use(bodyParser.json())
@@ -72,10 +72,28 @@ passport.use(
 app.use('/auth', require('./routers/Auth'))
 app.use('/', require('./routers/APIs'))
 
-server.listen(port, () => {
+server.listen(port, async () => {
     new IO(server)
     console.log(`🚀 Server is running on port ${port}`)
+    var speed = Number.parseInt(process.argv[2]) || 10
+    var start = Number.parseInt(process.argv[3]) || 0
 
-    
-  
+
+    if (true) {
+        console.log("Starting to get movies with speed of " + speed + " and starting from " + start)
+        var aa = Array.from({ length: 1000 }, (_, i) => i + start )
+        for (let index = 0; index < aa.length; index += speed) {
+            await Promise.all(
+                aa.slice(index, index + speed).map(async (i) => {
+                    await getMovie(i).then((res) => {
+                        console.log(res.info.title, "✅")
+                    }).catch((err) => {
+                        console.log(i, "❌")
+                    })
+                })
+            )
+        }
+
+    }
+
 })
