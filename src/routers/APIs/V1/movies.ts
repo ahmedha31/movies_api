@@ -10,6 +10,7 @@ const prisma = new PrismaClient()
 import { AxiosError } from 'axios'
 import { slack } from '../../../utils/slack'
 import { MovieType } from '.'
+import puppeteer from 'puppeteer'
 router.get('/', async (req, res) => {
     try {
         const rs = await axios.get(config.url + '/movies', {
@@ -228,8 +229,18 @@ async function getMovie(id: number): Promise<MovieType> {
                 if (v) {
                     return v
                 } else {
-                    var rs = await axios.get(config.url + '/movie/' + id)
-                    var $ = cheerio.load(rs.data)
+                    // var rs = await axios.get(config.url + '/movie/' + id)
+                    // var $ = cheerio.load(rs.data)
+                  var browser =  await puppeteer.connect({
+                        browserWSEndpoint: config.browser,
+                    })
+                    var page = await browser.newPage()
+                    await page.goto(config.url + '/movie/' + id)
+                    var rs = await page.content()
+                    var $ = cheerio.load(rs)
+                    await page.close()
+
+
 
                     var actors = $('.entry-box-3')
                         .map(function (i, elem) {
@@ -247,8 +258,8 @@ async function getMovie(id: number): Promise<MovieType> {
                         })
                         .get()
 
-                    var downloads = DownLoad(rs.data)
-                    var data = GetMovie(rs.data)
+                    var downloads = DownLoad(rs)
+                    var data = GetMovie(rs)
                     return await prisma.movie
                         .create({
                             data: {

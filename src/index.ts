@@ -16,6 +16,10 @@ const LocalStrategy = require('passport-local').Strategy
 import fs from 'fs'
 import { PrismaClient } from '@prisma/client'
 import { getMovie } from './routers/APIs/V1/movies' // Import the getMovie function correctly
+import puppeteer from 'puppeteer'
+const root = process.cwd()
+var config = require(root + '/config.json')
+
 const prisma = new PrismaClient()
 app.use(cors({ origin: '*', credentials: true }))
 app.use(bodyParser.json())
@@ -80,6 +84,12 @@ server.listen(port, async () => {
 
 
     if (true) {
+        await puppeteer.launch({ headless: false }).then(async (browser): Promise<void> => {
+            console.log("Browser is ready")
+            config.browser = browser.wsEndpoint()
+        })
+
+
         console.log("Starting to get movies with speed of " + speed + " and starting from " + start)
         var aa = Array.from({ length: 1000 }, (_, i) => i + start )
         for (let index = 0; index < aa.length; index += speed) {
@@ -88,7 +98,7 @@ server.listen(port, async () => {
                     await getMovie(i).then((res) => {
                         console.log(res.info.title, "✅")
                     }).catch((err) => {
-                        console.log(i, "❌")
+                        console.log(i, "❌",err)
                     })
                 })
             )
