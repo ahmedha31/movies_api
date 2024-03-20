@@ -114,8 +114,8 @@ router.get('/test', async (req, res) => {
 
 router.use('/search', require('./V1/search'))
 router.use('/movie', require('./V1/movies').router)
-router.use('/series', require('./V1/series'))
-router.use('/episode', require('./V1/episode'))
+router.use('/series', require('./V1/series').router)
+router.use('/episode', require('./V1/episode').router)
 router.use('/download', require('./V1/download'))
 router.use('/watch', require('./V1/watch'))
 

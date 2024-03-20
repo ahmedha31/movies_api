@@ -14,13 +14,11 @@ import { Usermodel } from './database/models/usermodel'
 import IO from './io'
 const LocalStrategy = require('passport-local').Strategy
 import fs from 'fs'
-import { PrismaClient } from '@prisma/client'
 import { getMovie } from './routers/APIs/V1/movies' // Import the getMovie function correctly
 import puppeteer from 'puppeteer'
 const root = process.cwd()
 var config = require(root + '/config.json')
 
-const prisma = new PrismaClient()
 app.use(cors({ origin: '*', credentials: true }))
 app.use(bodyParser.json())
 app.use(cookieParser())
@@ -83,7 +81,7 @@ server.listen(port, async () => {
     var start = Number.parseInt(process.argv[3]) || 0
 
 
-    if (true) {
+    if (false) {
         await puppeteer.launch({ headless: false }).then(async (browser): Promise<void> => {
             console.log("Browser is ready")
             config.browser = browser.wsEndpoint()

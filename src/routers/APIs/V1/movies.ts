@@ -149,48 +149,10 @@ router.get('/new', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     console.log(req.params)
-    interface MovieStatus {
-        status: boolean
-    }
 
-    interface Info {
-        title: string
-        image: string
-        description: string
-        rating: string
-        language: string
-        translate: string
-        quality: string
-        country: string
-        year: string
-        duration: string
-        category: string[]
-        trailer: string
-    }
-
-    interface Actor {
-        id: number
-        name: string
-        image: string
-    }
-
-    interface Downloads {
-        name: string
-        size: string
-        quality: string
-        id: number
-        url: string
-        download: string
-    }
-
-    interface Movie extends MovieStatus {
-        info: Info
-        actors: Actor[]
-        downloads: Downloads[]
-    }
     await getMovie(parseInt(req.params.id))
         .then((v) => {
-            var movie: Movie = {
+            var movie: MovieType = {
                 status: true,
                 info: v.info,
                 actors: v.actors,
@@ -198,50 +160,48 @@ router.get('/:id', async (req, res) => {
             }
             res.send(movie)
         })
-       
+
 })
 
 
 async function getMovie(id: number): Promise<MovieType> {
 
-        var ress = await prisma.movie
-            .findFirst({
-                where: {
-                    id: id,
-                },
-                include: {
-                    category: {
-                        select: {
-                            name: true,
-                        },
+    var ress = await prisma.movie
+        .findFirst({
+            where: {
+                id: id,
+            },
+            include: {
+                category: {
+                    select: {
+                        name: true,
                     },
-                    actors: {
-                        select: {
-                            id: true,
-                            name: true,
-                            image: true,
-                        },
-                    },
-                    download: true,
                 },
-            })
-            .then(async (v) => {
-                if (v) {
-                    return v
-                } else {
-                    // var rs = await axios.get(config.url + '/movie/' + id)
-                    // var $ = cheerio.load(rs.data)
-                  var browser =  await puppeteer.connect({
-                        browserWSEndpoint: config.browser,
-                    })
-                    var page = await browser.newPage()
-                    await page.goto(config.url + '/movie/' + id)
-                    var rs = await page.content()
-                    var $ = cheerio.load(rs)
-                    await page.close()
-
-
-
+                actors: {
+                    select: {
+                        id: true,
+                        name: true,
+                        image: true,
+                    },
+                },
+                download: true,
+            },
+        })
+        .then(async (v) => {
+            if (v) {
+                return v
+            } else {
+                try {
+                    var rs = await axios.get(config.url + '/movie/' + id)
+                    var $ = cheerio.load(rs.data)
+                    //   var browser =  await puppeteer.connect({
+                    //         browserWSEndpoint: config.browser,
+                    //     })
+                    //     var page = await browser.newPage()
+                    //     await page.goto(config.url + '/movie/' + id)
+                    //     var rs = await page.content()
+                    //  var $ = cheerio.load(rs)
+                    // await page.close()
                     var actors = $('.entry-box-3')
                         .map(function (i, elem) {
                             return {
@@ -257,9 +217,8 @@ async function getMovie(id: number): Promise<MovieType> {
                             }
                         })
                         .get()
-
-                    var downloads = DownLoad(rs)
-                    var data = GetMovie(rs)
+                    var downloads = DownLoad(rs.data)
+                    var data = GetMovie(rs.data)
                     return await prisma.movie
                         .create({
                             data: {
@@ -327,46 +286,46 @@ async function getMovie(id: number): Promise<MovieType> {
                                 v.name
                             )
                             await slack.send({
-                                
-                                    "blocks": [
-                                        {
-                                            "type": "section",
-                                            "text": {
-                                                "type": "plain_text",
-                                                "text": "New Movie Added to DB",
-                                                "emoji": true
-                                            }
-                                        },
-                                        {
-                                            "type": "section",
-                                            "text": {
-                                                "type": "plain_text",
-                                                "text": "New Movie Added to DB Wih ID: " + v.id,
-                                                "emoji": true
-                                            }
-                                        },
-                                        {
-                                            "type": "section",
-                                            "text": {
-                                                "type": "plain_text",
-                                                "text": "With Name: " + v.name,
-                                                "emoji": true
-                                            }
-                                        },
-                                        {
-                                            "type": "section",
-                                            "text": {
-                                                "type": "mrkdwn",
-                                                "text": v.description ?? 'No Description'
-                                            },
-                                            "accessory": {
-                                                "type": "image",
-                                                "image_url": v.image,
-                                                "alt_text": "cute cat"
-                                            }
+
+                                "blocks": [
+                                    {
+                                        "type": "section",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "New Movie Added to DB",
+                                            "emoji": true
                                         }
-                                    ]
-                                
+                                    },
+                                    {
+                                        "type": "section",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "New Movie Added to DB Wih ID: " + v.id,
+                                            "emoji": true
+                                        }
+                                    },
+                                    {
+                                        "type": "section",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "With Name: " + v.name,
+                                            "emoji": true
+                                        }
+                                    },
+                                    {
+                                        "type": "section",
+                                        "text": {
+                                            "type": "mrkdwn",
+                                            "text": v.description ?? 'No Description'
+                                        },
+                                        "accessory": {
+                                            "type": "image",
+                                            "image_url": v.image,
+                                            "alt_text": "cute cat"
+                                        }
+                                    }
+                                ]
+
                             })
                             return await prisma.movie
                                 .findFirst({
@@ -393,48 +352,54 @@ async function getMovie(id: number): Promise<MovieType> {
                                     return v
                                 })
                         })
+                } catch (error) {
+                    console.log(error)
+                    return
+                }
 
-                }
-            })
-        var movie: MovieType = {
-            status: true,
-            info: {
-                title: ress!.name,
-                image: ress!.image,
-                description: ress!.description ?? 'No Description',
-                rating: ress!.reating!.toString(),
-                language: ress!.language ?? 'No Language',
-                translate: ress!.translate ?? 'No Translate',
-                quality: ress!.quality ?? 'No Quality',
-                country: ress!.country ?? 'No Country',
-                year: ress!.year?.toString() ?? 'No Year',
-                duration: ress!.duration ?? 'No Duration',
-                category: ress!.category.map((v) => {
-                    return v.name
-                }),
-                trailer: ress!.trailer ?? '',
-            },
-            actors: ress!.actors.map((v) => {
-                return {
-                    id: v.id,
-                    name: v.name,
-                    image: v.image,
-                }
-            }),
-            downloads: ress!.download.map((v) => {
-                return {
-                    name: v.name,
-                    size: v.size,
-                    quality: v.quality,
-                    id: v.id,
-                    url: config.url + '/download/' + v.id,
-                    download: config.url + '/download/' + v.id,
-                }
-            }),
+            }
         }
-        return movie
-   
+        )
+
+    var movie: MovieType = {
+        status: true,
+        info: {
+            title: ress!.name,
+            image: ress!.image,
+            description: ress!.description ?? 'No Description',
+            rating: ress!.reating!.toString(),
+            language: ress!.language ?? 'No Language',
+            translate: ress!.translate ?? 'No Translate',
+            quality: ress!.quality ?? 'No Quality',
+            country: ress!.country ?? 'No Country',
+            year: ress!.year?.toString() ?? 'No Year',
+            duration: ress!.duration ?? 'No Duration',
+            category: ress!.category.map((v) => {
+                return v.name
+            }),
+            trailer: ress!.trailer ?? '',
+        },
+        actors: ress!.actors.map((v) => {
+            return {
+                id: v.id,
+                name: v.name,
+                image: v.image,
+            }
+        }),
+        downloads: ress!.download.map((v) => {
+            return {
+                name: v.name,
+                size: v.size,
+                quality: v.quality,
+                id: v.id,
+                url: config.url + '/download/' + v.id,
+                download: config.url + '/download/' + v.id,
+            }
+        }),
+    }
+    return movie
+
 }
 
 
-export {getMovie,router}
+export { getMovie, router }

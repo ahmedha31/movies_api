@@ -105,10 +105,10 @@ export const GetEp = (rs: any) => {
         episode: aes,
         image: $('.page .movie-cover').find('a[data-fancybox]').attr('href'),
         duration: entry.find((x: { name: string }) => x.name === 'مدة المسلسل')
-            ? entry
-                  .find((x: { name: string }) => x.name === 'مدة المسلسل')!
-                  .value.split(' دقيقة')[0]
-            : null,
+            ? parseInt( entry
+                .find((x: { name: string }) => x.name === 'مدة المسلسل')!
+                .value.split(' دقيقة')[0])
+            : 0,
     }
     return detail
 }

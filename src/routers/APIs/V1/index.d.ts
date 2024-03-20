@@ -44,6 +44,16 @@ interface NewSeries {
     msg?: string;
     err?: string;
   }
+
+  export interface Seriestype {
+    status?: boolean;
+    detail: SeriesData;
+    episodes: Eps[];
+    actors: any[]; // You can replace 'any' with a specific type if needed for actors
+    seasons?: Season[] | null;
+    msg?: string;
+    err?: string;
+  }
   
   interface SeriesData {
     name: string;
@@ -61,10 +71,13 @@ interface NewSeries {
   }
   
   interface Eps {
-    id: string;
+    id: num;
     name: string;
     cont: number;
     image: string;
+    duration: string;
+    downloads: Downloads[];
+
   }
   
   interface Season {
@@ -135,8 +148,7 @@ interface Downloads {
   size: string;
   quality: string;
   id: number;
-  url: string;
-  download: string;
+ 
 }
 
 interface Info {
@@ -152,6 +164,32 @@ interface Info {
   duration: string;
   category: string[];
   trailer: string;
+}
+
+interface EpisodeData {
+  name: string;
+  episode: string;
+  image: string;
+  duration: number;
+}
+
+
+interface EpisodeResponse {
+  status: boolean;
+  info: EpisodeData;
+  downloads: Downloads[];
+  msg?: string;
+  err?: string;
+}
+
+class Episode {
+  status: boolean;
+  info: EpisodeData;
+  downloads: Downloads[];
+  msg?: string;
+  err?: string;
+
+
 }
 
 
@@ -174,4 +212,8 @@ interface Info {
     Actor,
     Downloads,
     Info,
+    EpisodeData,
+    EpisodeResponse,
+    Episode,
+    SeriesData
   };
